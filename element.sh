@@ -38,3 +38,42 @@ PSQL="psql --username=freecodecamp --dbname=periodic_table --tuples-only -c"
 
 # INSERT_FLOURINE=$($PSQL "INSERT INTO properties(atomic_number, melting_point_celsius, boiling_point_celsius, type_id, atomic_mass) VALUES(9, -220, -188.1, 3,18.998);")
 #INSERT_NEON=$($PSQL "INSERT INTO properties(atomic_number, melting_point_celsius, boiling_point_celsius, type_id, atomic_mass) VALUES(10, -248.6, -246.1, 3,20.18);")
+
+# PROGRAM LOGIC
+#echo -e "\n~~~ Periodic Table Program ~~~\n"
+
+if [[ -z $1 ]]
+then 
+  echo "Please provide an element as an argument."
+else
+  if [[ $1 =~ ^[0-9]+$ ]]
+  then 
+    GET_ELEMENT=$($PSQL "SELECT atomic_number, symbol, name, melting_point_celsius, boiling_point_celsius, atomic_mass, type FROM elements INNER JOIN properties USING(atomic_number) INNER JOIN types USING(type_id) WHERE atomic_number = $1;")
+  fi
+  if [[ $1 =~ ^[A-Z][a-z]?$ ]]
+  then
+    GET_ELEMENT=$($PSQL "SELECT atomic_number, symbol, name, melting_point_celsius, boiling_point_celsius, atomic_mass, type FROM elements INNER JOIN properties USING(atomic_number) INNER JOIN types USING(type_id) WHERE symbol = '$1';")
+  fi
+  if [[ $1 =~ ^[A-Z][a-z]*$ ]]
+  then 
+    GET_ELEMENT=$($PSQL "SELECT atomic_number, symbol, name, melting_point_celsius, boiling_point_celsius, atomic_mass, type FROM elements INNER JOIN properties USING(atomic_number) INNER JOIN types USING(type_id) WHERE name = '$1';")
+    echo $GET_ELEMENT
+  fi
+  if [[ -z $GET_ELEMENT ]]
+  then
+    echo -e "\nI could not find that element int the database."
+  else
+    echo $GET_ELEMENT | while IFS="|" read NUMBER SYMBOL NAME MELTING BOILING MASS TYPE
+    do
+      NUMBER_FORMATTED=$(echo $NUMBER | sed -E 's/^ *| *$//g')
+      SYMBOL_FORMATTED=$(echo $SYMBOL | sed -E 's/^ *| *$//g')
+      NAME_FORMATTED=$(echo $NAME | sed -E 's/^ *| *$//g')
+      MELTING_FORMATTED=$(echo $MELTING | sed -E 's/^ *| *$//g')
+      BOILING_FORMATTED=$(echo $BOILING | sed -E 's/^ *| *$//g')
+      MASS_FORMATTED=$(echo $MASS | sed -E 's/^ *| *$//g')
+      TYPE_FORMATTED=$(echo $TYPE | sed -E 's/^ *| *$//g')
+      echo -e "\nThe element with atomic number $NUMBER_FORMATTED is $NAME_FORMATTED ($SYMBOL_FORMATTED). It's a $TYPE_FORMATTED, with a mass of $MASS_FORMATTED amu. Hydrogen has a melting point of $MELTING_FORMATTED celsius and a boiling point of $BOILING_FORMATTED celsius.\n"
+    done
+  fi
+fi
+
